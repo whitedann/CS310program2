@@ -1,13 +1,19 @@
 package edu.sdsu.cs.datastructures;
 
+import javax.sound.sampled.Line;
+import java.util.Collections;
 import java.util.LinkedList;
+import java.util.List;
 
 public class UnbalancedMap<K extends Comparable<K>, V> implements IMap<K,V>{
 
     private int currentSize;
     private Node root;
+    private Keys keySet;
+    private LinkedList<K> keys;
 
     public UnbalancedMap(IMap<K,V> source){
+        //TODO
         this.root = null;
         this.currentSize = 0;
     }
@@ -15,6 +21,24 @@ public class UnbalancedMap<K extends Comparable<K>, V> implements IMap<K,V>{
     public UnbalancedMap(){
         this.root = null;
         this.currentSize = 0;
+        this.keySet = new Keys();
+        this.keys = new LinkedList<>();
+    }
+
+    private class Keys{
+        public LinkedList<K> list = new LinkedList<>();
+        public Iterable<K> keys = list;
+
+        public K add(K key){
+            list.add(key);
+            keys = list;
+            return key;
+        }
+
+        public Iterable<K> getKeys(){
+            return this.keys;
+        }
+
     }
 
     private class Node{
@@ -86,15 +110,56 @@ public class UnbalancedMap<K extends Comparable<K>, V> implements IMap<K,V>{
 
     @Override
     public V delete(K key) {
-        //TODO needs to work on this
+        Node parentNodeToDelete = findNodeToDelete(key);
+
+        /** No Children **/
+        if(parentNodeToDelete.left == null && parentNodeToDelete.right == null){
+            if(parentNodeToDelete.left.key == key)
+                parentNodeToDelete.left = null;
+            if(parentNodeToDelete.right.key == key)
+                parentNodeToDelete.right = null;
+        }
+        /** One Child **/
+        if(parentNodeToDelete.left != null || parentNodeToDelete.right != null){
+            if(parentNodeToDelete.left != null){
+                parentNodeToDelete.left
+            }
+        }
+
         return null;
+    }
+
+    private Node findNodeToDelete(K key){
+        Node nodeToDelete = root;
+        if(nodeToDelete == null){
+            return null;
+        }
+
+        while(nodeToDelete != null) {
+            if(nodeToDelete.left != null) {
+                if(nodeToDelete.left.key.compareTo(key) == 0)
+                    return nodeToDelete;
+            }
+            if(nodeToDelete.right != null){
+                if(nodeToDelete.right.key.compareTo(key) == 0)
+                    return nodeToDelete;
+            }
+            if(nodeToDelete.key.compareTo(key) < 0){
+                nodeToDelete = nodeToDelete.right;
+            }
+            if(nodeToDelete.key.compareTo(key) > 0){
+                nodeToDelete = nodeToDelete.left;
+            }
+        }
+        return nodeToDelete;
+
     }
 
     @Override
     public V getValue(K key) {
         Node currentNode = root;
         if(currentNode == null) {
-            System.out.println("0");
+            return null;
         }
 
         while(true){
@@ -119,11 +184,13 @@ public class UnbalancedMap<K extends Comparable<K>, V> implements IMap<K,V>{
 
     @Override
     public K getKey(V value) {
+        //Todo
         return null;
     }
 
     @Override
     public Iterable<K> getKeys(V value) {
+        //Todo
         return null;
     }
 
@@ -148,21 +215,25 @@ public class UnbalancedMap<K extends Comparable<K>, V> implements IMap<K,V>{
 
     @Override
     public Iterable<K> keyset() {
-        LinkedList<K> keyset = new LinkedList<>();
-        //preOrderTraverse(root, keyset);
-        return keyset;
+        Collections.sort(keys);
+        return this.keys;
+       /**
+       preOrderTraverse(root);
+       return keySet.getKeys();
+        **/
     }
 
-    public void preOrderTraverse(Node e, LinkedList<K> list){
+    public void preOrderTraverse(Node e){
         if(e != null){
-            preOrderTraverse(e.left, list);
-            list.add(e.key);
-            preOrderTraverse(e.right, list);
+            keySet.add(e.key);
+            preOrderTraverse(e.left);
+            preOrderTraverse(e.right);
         }
     }
 
     @Override
     public Iterable<V> values() {
+        //Todo
         return null;
     }
 }

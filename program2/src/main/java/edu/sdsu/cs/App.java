@@ -12,12 +12,12 @@ public class App
     {
 
         /** Tests **/
-        UnbalancedMap<Integer, Integer> test = new UnbalancedMap<>();
-        for(int i = 0; i < 10000; i++){
-            test.add(i, i+1);
+        UnbalancedMap<Double, Integer> test = new UnbalancedMap<>();
+        for(int i = 0; i < 1000; i++){
+            test.add(i * Math.random(), i+1);
         }
-        System.out.println(test.contains(22222));
-        System.out.println(test.getValue(23));
-        System.out.println(test.getValue(2312));
+
+        test.add((double) 123, 2332);
+        test.delete((double) 123);
     }
 }
