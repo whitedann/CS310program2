@@ -1,58 +1,96 @@
+/** Daniel White (CSSC0721) & Mario Shamhon (CSSC0781)**/
+/** CS 310, Fall 2018, Shawn Healey **/
+
 package edu.sdsu.cs.datastructures;
 
-import javax.sound.sampled.Line;
-import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
 
 public class UnbalancedMap<K extends Comparable<K>, V> implements IMap<K,V>{
 
     private int currentSize;
     private Node root;
-    private Keys keySet;
-    private LinkedList<K> keys;
 
     public UnbalancedMap(IMap<K,V> source){
-        //TODO
-        this.root = null;
-        this.currentSize = 0;
+        IteratorHelper builder = new IteratorHelper(source);
+        while(builder.hasNext()){
+            builder.makeNode();
+        }
     }
 
     public UnbalancedMap(){
         this.root = null;
         this.currentSize = 0;
-        this.keySet = new Keys();
-        this.keys = new LinkedList<>();
     }
 
-    private class Keys{
-        public LinkedList<K> list = new LinkedList<>();
-        public Iterable<K> keys = list;
+    private class IteratorHelper{
 
-        public K add(K key){
-            list.add(key);
-            keys = list;
-            return key;
+        private Iterator<K> kiter;
+        private Iterator<V> viter;
+
+        public IteratorHelper(IMap<K,V> source){
+            kiter = source.keyset().iterator();
+            viter = source.values().iterator();
         }
 
-        public Iterable<K> getKeys(){
-            return this.keys;
+        public boolean hasNext(){
+            return kiter.hasNext() && viter.hasNext();
+        }
+
+        public void makeNode(){
+            add(kiter.next(), viter.next());
         }
 
     }
 
-    private class Node{
+    private class Node {
         public K key;
         public V value;
-        public Node left, right;
+        public Node left, right, parent;
 
-        public Node(K key, V val){
+        public Node(K key, V val, Node parent) {
             this.key = key;
             this.value = val;
+            this.parent = parent;
         }
+    }
 
-        public int compareTo(Node otherNode) {
-            return ((Comparable<K>)key).compareTo((K)otherNode.key);
+    //Finds node of the given key
+    private Node findNode(K key){
+        Node p = root;
+
+        while(p != null){
+            int cmp = key.compareTo(p.key);
+            if(cmp < 0)
+                p = p.left;
+            else if (cmp > 0)
+                p = p.right;
+            else
+                return p;
+        }
+        return null;
+    }
+
+    //Finds the sucessory node to target node
+    private Node predecessor(Node e){
+        if(e == null)
+            return null;
+        else if(e.left != null){
+            Node p = e.left;
+            while(p.right != null)
+                p = p.right;
+            return p;
+        }
+        else {
+            Node parent = e.parent;
+            Node child = e;
+            while(parent != null && child == parent.left){
+                child = parent;
+                if(parent.parent != null)
+                    parent = parent.parent;
+                else parent = root;
+            }
+            return parent;
         }
     }
 
@@ -77,7 +115,7 @@ public class UnbalancedMap<K extends Comparable<K>, V> implements IMap<K,V>{
     @Override
     public boolean add(K key, V value) {
         if(root == null){
-            root = new Node(key, value);
+            root = new Node(key, value, null);
             currentSize++;
         }
         Node currentNode = root;
@@ -86,7 +124,7 @@ public class UnbalancedMap<K extends Comparable<K>, V> implements IMap<K,V>{
             compareResult = key.compareTo(currentNode.key);
             if(compareResult < 0) {
                 if(currentNode.left == null) {
-                    currentNode.left = new Node(key, value);
+                    currentNode.left = new Node(key, value, currentNode);
                     currentSize++;
                     return true;
                 }
@@ -95,7 +133,7 @@ public class UnbalancedMap<K extends Comparable<K>, V> implements IMap<K,V>{
             }
             else if(compareResult > 0) {
                 if(currentNode.right == null) {
-                    currentNode.right = new Node(key, value);
+                    currentNode.right = new Node(key, value, currentNode);
                     currentSize++;
                     return true;
                 }
@@ -110,50 +148,96 @@ public class UnbalancedMap<K extends Comparable<K>, V> implements IMap<K,V>{
 
     @Override
     public V delete(K key) {
-        Node parentNodeToDelete = findNodeToDelete(key);
-
-        /** No Children **/
-        if(parentNodeToDelete.left == null && parentNodeToDelete.right == null){
-            if(parentNodeToDelete.left.key == key)
-                parentNodeToDelete.left = null;
-            if(parentNodeToDelete.right.key == key)
-                parentNodeToDelete.right = null;
-        }
-        /** One Child **/
-        if(parentNodeToDelete.left != null || parentNodeToDelete.right != null){
-            if(parentNodeToDelete.left != null){
-                parentNodeToDelete.left
-            }
-        }
-
-        return null;
-    }
-
-    private Node findNodeToDelete(K key){
-        Node nodeToDelete = root;
-        if(nodeToDelete == null){
+        //Find Node to remove using key
+        Node toRemove = findNode(key);
+        if(toRemove == null){
             return null;
         }
+        else
+            currentSize--;
+        V tempVal = toRemove.value;
 
-        while(nodeToDelete != null) {
-            if(nodeToDelete.left != null) {
-                if(nodeToDelete.left.key.compareTo(key) == 0)
-                    return nodeToDelete;
+        //Node has 0 children
+        if(toRemove.right == null && toRemove.left == null) {
+            if(toRemove == root){
+                root = null;
+                toRemove.parent = null;
             }
-            if(nodeToDelete.right != null){
-                if(nodeToDelete.right.key.compareTo(key) == 0)
-                    return nodeToDelete;
-            }
-            if(nodeToDelete.key.compareTo(key) < 0){
-                nodeToDelete = nodeToDelete.right;
-            }
-            if(nodeToDelete.key.compareTo(key) > 0){
-                nodeToDelete = nodeToDelete.left;
-            }
+            else if(toRemove.parent.left == toRemove)
+                toRemove.parent.left = null;
+            else
+                toRemove.parent.right = null;
+            return tempVal;
         }
-        return nodeToDelete;
+        //Node has 1 child
+        else if(toRemove.left != null ^ toRemove.right != null){
+            if(toRemove.left != null){
+                 //link grandchild to grandparent
+                 toRemove.left.parent = toRemove.parent;
+                 //link grandparent to grandchild
+                if(toRemove == root){
+                    root = toRemove.left;
+                    toRemove.parent = null;
+                }
+                else if(toRemove.parent.left == toRemove) {
+                    toRemove.parent.left = toRemove.left;
+                }
+                else {
+                    toRemove.parent.right = toRemove.left;
+                }
+            }
+            else{
+                toRemove.right.parent = toRemove.parent;
+                 if(toRemove == root){
+                     root = toRemove.right;
+                     toRemove.parent = null;
+                 }
+                 else if(toRemove.parent.left == toRemove) {
+                     toRemove.parent.left = toRemove.right;
+                 }
+                 else {
+                     toRemove.parent.right = toRemove.right;
+                 }
+            }
+             return tempVal;
+        }
+        /** The below section I got help from the following link:
+         * * https://stackoverflow.com/questions/29871949/delete-a-node-from-a-
+         * binary-search-tree
+         *
+         */
+        //Node has 2 children
+        else if(toRemove.left != null && toRemove.right != null){
+            Node predecessor = predecessor(toRemove);
+            predecessor.parent.left = null;
+            predecessor.parent = null;
+            Node parentOfTheNodeToDelete = toRemove.parent;
 
+            predecessor.parent = parentOfTheNodeToDelete;
+            Node rightOfNodeToDelete = toRemove.right;
+            Node leftOfNodeToDelete = toRemove.left;
+
+            if(parentOfTheNodeToDelete == null){
+                root = predecessor;
+            } else {
+                if (parentOfTheNodeToDelete.right.key
+                        .compareTo(toRemove.key) == 0) {
+                    parentOfTheNodeToDelete.right = predecessor;
+
+                } else if (parentOfTheNodeToDelete.left.key
+                        .compareTo(toRemove.key) == 0) {
+                    parentOfTheNodeToDelete.left = predecessor;
+                }
+
+            }
+            if(predecessor.right != predecessor)
+                predecessor.right = rightOfNodeToDelete;
+            if(predecessor.left != predecessor)
+                predecessor.left = leftOfNodeToDelete;
+        }
+        return tempVal;
     }
+
 
     @Override
     public V getValue(K key) {
@@ -184,14 +268,44 @@ public class UnbalancedMap<K extends Comparable<K>, V> implements IMap<K,V>{
 
     @Override
     public K getKey(V value) {
-        //Todo
-        return null;
+        if(currentSize == 0)
+            return null;
+        LinkedList<K> list = new LinkedList<>();
+        getFirstNodeFromValue(root, list, value);
+        if(list.size() == 0)
+            return null;
+        return list.get(0);
+    }
+
+    private void getFirstNodeFromValue(Node e,LinkedList list, V value){
+        if( e != null){
+            if(e.value.equals(value)) {
+                list.add(e.key);
+                return;
+            }
+            getFirstNodeFromValue(e.left, list, value);
+            getFirstNodeFromValue(e.right, list, value);
+        }
     }
 
     @Override
     public Iterable<K> getKeys(V value) {
-        //Todo
-        return null;
+        LinkedList<K> list = new LinkedList<>();
+        retrieveKeys(root, list, value);
+        if(list.size() == 0){
+            return null;
+        }
+        return list;
+    }
+
+    private void retrieveKeys(Node e, LinkedList list, V value){
+        //recursively retrieves keys associated with value, adds them to list
+        if( e != null) {
+            retrieveKeys(e.left, list, value);
+            if (e.value.equals(value))
+                list.add(e.key);
+            retrieveKeys(e.right, list, value);
+        }
     }
 
     @Override
@@ -215,25 +329,34 @@ public class UnbalancedMap<K extends Comparable<K>, V> implements IMap<K,V>{
 
     @Override
     public Iterable<K> keyset() {
-        Collections.sort(keys);
-        return this.keys;
-       /**
-       preOrderTraverse(root);
-       return keySet.getKeys();
-        **/
+        LinkedList<K> list = new LinkedList();
+        inOrderTraverse(root, list);
+        return list;
     }
 
-    public void preOrderTraverse(Node e){
-        if(e != null){
-            keySet.add(e.key);
-            preOrderTraverse(e.left);
-            preOrderTraverse(e.right);
+    private void inOrderTraverse(Node e, LinkedList list){
+        //recursively finds all the keys in tree, adds them to list
+        if(e != null) {
+            inOrderTraverse(e.left, list);
+            list.add(e.key);
+            inOrderTraverse(e.right, list);
         }
     }
 
     @Override
     public Iterable<V> values() {
-        //Todo
-        return null;
+        LinkedList<V> list = new LinkedList<>();
+        inOrderTraverseVals(root, list);
+        return list;
     }
+
+    private void inOrderTraverseVals(Node e, LinkedList list){
+        //recursively finds all the values in the tree, adds them to list
+        if(e != null){
+            inOrderTraverseVals(e.left, list);
+            list.add(e.value);
+            inOrderTraverseVals(e.right, list);
+        }
+    }
+
 }

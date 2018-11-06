@@ -1,3 +1,6 @@
+/** Daniel White (CSSC0721) & Mario Shamhon (CSSC0781)**/
+/** CS 310, Fall 2018, Shawn Healey **/
+
 package edu.sdsu.cs.datastructures;
 
 import java.util.*;

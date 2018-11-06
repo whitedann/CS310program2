@@ -87,7 +87,7 @@ public class UnbalancedMapTest {
         assertNull(foundKey);
     }
 
-    @Test
+    @Test //1
     public void getKey_returnsCorrectKey() {
 
         int testSize = DEFAULT_TEST_SIZE >> 4;
@@ -111,7 +111,7 @@ public class UnbalancedMapTest {
         assertNull(foundKey);
     }
 
-    @Test
+    @Test //stackoverflow
     public void getKeys_allFound() {
         // setup the test
         List<String> testedKeys = new LinkedList<>();
@@ -189,7 +189,7 @@ public class UnbalancedMapTest {
         checkInitializedCorrectly();
     }
 
-    @Test
+    @Test //stackoverflow
     public void mapConstructor_initCorrectly() {
         IMap<String, Long> original =
                 addInOrderSequence(new UnbalancedMap<String, Long>(),
@@ -267,7 +267,7 @@ public class UnbalancedMapTest {
         assertTrue(underTest.contains(17));
     }
 
-    @Test
+    @Test //null pointer
     public void delete_oneChildRoot_correctSizeAndContents() {
         IMap<Integer, Integer> underTest = new UnbalancedMap<>();
 
@@ -290,7 +290,7 @@ public class UnbalancedMapTest {
         assertTrue(underTest.contains(15));
     }
 
-    @Test
+    @Test //null pointer
     public void delete_zeroChildRoot_initCorrectly() {
 
         // build the test
@@ -303,7 +303,7 @@ public class UnbalancedMapTest {
         checkInitializedCorrectly();
     }
 
-    @Test
+    @Test //1
     public void delete_twoChildSubchild_correctSizeAndContents() {
         IMap<Integer, Integer> underTest = new UnbalancedMap<>();
 
